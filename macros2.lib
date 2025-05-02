@@ -1,0 +1,274 @@
+Ingreso_2Nums MACRO Numero1, Numero2
+	;====ingreso de variable num1====
+	;Leer dessde el teclado (LEER UN CARACTER)
+	MOV DX, OFFSET msg1	;Mensaje de primer numero 
+    MOV AH, 09H            
+    INT 21H  
+	MOV AH, 01H		;Parametro para leer desde el teclado
+	INT 21H			;ejecuta la lectura
+	;Guardarlo en la variable
+	MOV num1, AL
+	
+	MOV DL, LnJmp	;Salto de Linea  
+    MOV AH, 02H            
+    INT 21H 	
+	
+	;=ingreso de variable num2====
+	;Leer dessde el teclado (LEER UN CARACTER)
+	MOV DX, OFFSET msg2	;Mensaje de primer numero 
+    MOV AH, 09H            
+    INT 21H  
+	MOV AH, 01H		;Parametro para leer desde el teclado
+	INT 21H			;ejecuta la lectura
+	;Guardarlo en la variable
+	MOV num2, AL
+	
+    ; Convertir num1 de ASCII a valor numerico
+    MOV AL, num1
+    SUB AL, 30h
+    MOV num1, AL
+
+    ; Convertir num2 de ASCII a valor numerico
+    MOV AL, num2
+    SUB AL, 30h
+    MOV num2, AL
+	
+	MOV DL, LnJmp	;Salto de Linea  
+    MOV AH, 02H            
+    INT 21H 	
+endm
+
+Ingreso_1Nums MACRO Numero1
+    ;====Ingreso de variable Numero1 (2 dígitos)====
+    
+    ; Mostrar mensaje
+    MOV DX, OFFSET msg1     
+    MOV AH, 09H            
+    INT 21H  
+
+    ; Leer primer dígito
+    MOV AH, 01H            
+    INT 21H                
+    SUB AL, 30h            ; Convertir ASCII a número
+    MOV BL, AL             ; Guardar en BL como decena
+
+    ; Leer segundo dígito
+    MOV AH, 01H
+    INT 21H
+    SUB AL, 30h            ; Convertir ASCII a número
+    MOV BH, AL             ; Guardar en BH como unidad
+
+    ; Calcular numero final: (BL * 10) + BH
+    MOV AL, BL             
+    MOV AH, 0              
+    MOV CX, 10
+    MUL CL                 ; AX = BL * 10
+    ADD AL, BH             ; AL = AL + BH
+    MOV Numero1, AL        ; Guardar resultado en la variable
+
+    ; Salto de línea
+    MOV DL, LnJmp          
+    MOV AH, 02H            
+    INT 21H               
+
+ENDM
+
+Mostrar_2Digitos MACRO Numero
+    ; Copiamos el número a AL
+    MOV AL, Numero
+
+    ; Dividimos entre 10 para obtener decenas y unidades
+    MOV AH, 0
+    MOV BL, 10
+    DIV BL              ; AL / 10 -> AL = cociente (decenas), AH = residuo (unidades)
+
+    ; Mostrar decenas
+    ADD AL, 30h         ; Convertir decena a ASCII
+    MOV DL, AL
+    MOV AH, 02h
+    INT 21h
+
+    ; Mostrar unidades
+    MOV AL, AH          ; Cargar unidades desde residuo
+    ADD AL, 30h         ; Convertir unidad a ASCII
+    MOV DL, AL
+    MOV AH, 02h
+    INT 21h
+
+    ; Salto de línea (opcional)
+    MOV DL, LnJmp
+    MOV AH, 02h
+    INT 21h
+ENDM
+
+
+Multiplicacion MACRO factor1, factor2, resultado
+	MOV DX, OFFSET msgOP1	;Mensaje de ejercicio 1  
+    MOV AH, 09H            
+    INT 21H  
+	MOV DL, LnJmp	;Salto de Linea  
+    MOV AH, 02H            
+    INT 21H 	
+	
+	XOR DX, DX
+	Ingreso_2Nums num1, num2
+
+    ; Inicializar resultado en 0
+    MOV result, 0
+
+    ; Preparar registros
+    MOV AL, num1      ; AL = num1 (el que vamos a sumar varias veces)
+    MOV BL, num2      ; BL = num2 (cuantas veces vamos a sumar)
+    MOV CL, BL        ; CL = contador de repeticiones
+
+    ; Bucle de sumas sucesivas
+multiplicacion_loop:
+    CMP CL, 0         ; ¿Ya terminamos todas las sumas?
+    JE fin_multiplicacion
+
+    ; Sumar num1 al resultado
+    MOV DL, result
+    ADD DL, AL
+    MOV result, DL
+
+    DEC CL            ; Decrementar contador
+    JMP multiplicacion_loop
+
+fin_multiplicacion:
+    ; Aquí resultado contiene el producto de num1 * num2
+	MOV DX, OFFSET msg3	;Mensaje de resultado
+    MOV AH, 09H            
+    INT 21H 
+    ; Mostrar resultado (como número ASCII)
+    ADD result, 30h
+    MOV DL, result
+    MOV AH, 02h
+    INT 21h
+	
+endm 
+
+Division MACRO dividendo, divisor, resultado
+	MOV DX, OFFSET msgOP2	;Mensaje de ejercicio 2  
+    MOV AH, 09H            
+    INT 21H 
+	MOV DL, LnJmp	;Salto de Linea  
+    MOV AH, 02H            
+    INT 21H 	           
+	
+	Ingreso_2Nums num1, num2
+
+; Inicializar cociente en 0
+    MOV result, 0
+
+    ; Preparar registros
+    MOV AL, num1      ; AL = dividendo (num1)
+    MOV BL, num2      ; BL = divisor (num2)
+
+division_loop:
+    CMP AL, BL        ; ¿AL < BL?
+    JL fin_division   ; Si sí, ya terminamos
+
+    SUB AL, BL        ; AL -= BL
+    INC result      ; cociente++
+
+    JMP division_loop
+
+fin_division:
+	MOV DX, OFFSET msg3	;Mensaje de resultado
+    MOV AH, 09H            
+    INT 21H 
+	MOV DL, LnJmp	;Salto de Linea  
+    MOV AH, 02H            
+    INT 21H 
+    ; Mostrar cociente como ASCII
+    MOV AL, result
+    ADD AL, 30h
+    MOV DL, AL
+    MOV AH, 02h
+    INT 21h	
+endm
+
+Factores MACRO factor, resultado
+    MOV DX, OFFSET msgOP3    ; Mensaje de ejercicio 3  
+    MOV AH, 09H              
+    INT 21H  
+    MOV DL, LnJmp            ; Salto de línea  
+    MOV AH, 02H              
+    INT 21H 
+
+    Ingreso_1Nums num1       ; Ingreso de número de 2 dígitos
+
+    MOV CL, num1             ; Guardar número en CL
+    MOV BL, 1                ; Comenzar a probar desde 1
+
+BuscarFactor:
+    MOV AL, CL               ; AL = número ingresado
+    MOV AH, 0
+    DIV BL                   ; AX = AL / BL (división)
+    CMP AH, 0                ; Si AH = 0, BL es un factor
+    JNZ NoEsFactor           ; Si no es factor, saltar
+
+    ; Si es factor, imprimir BL
+    MOV AL, BL               ; Pasar el valor de BL a AL (decenas)
+    Mostrar_2Digitos AL      ; Llamar al macro con el número correcto
+    MOV DL, LnJmp            ; Salto de línea  
+    MOV AH, 02H              
+    INT 21H 
+
+NoEsFactor:
+    INC BL                   ; Incrementar el divisor
+    CMP BL, CL               ; Comprobar si hemos llegado al límite
+    JBE BuscarFactor         ; Si BL <= CL, continuar buscando
+
+ENDM
+
+Fibonacci MACRO factor, resultado
+    MOV DX, OFFSET msgOP4    ; Mensaje de ejercicio 4  
+    MOV AH, 09H              
+    INT 21H  
+    MOV DL, LnJmp            ; Salto de línea  
+    MOV AH, 02H              
+    INT 21H 
+
+    Ingreso_1Nums num1       ; Ingreso de número de 2 dígitos
+
+    MOV CL, num1             ; CL = límite superior (num1)
+
+    ; Inicializar primeros dos términos
+    MOV AL, 0
+    Mostrar_2Digitos AL      ; Mostrar 0
+    MOV DL, LnJmp            ; Salto de línea  
+    MOV AH, 02H              
+    INT 21H 
+
+    MOV AL, 1
+    Mostrar_2Digitos AL      ; Mostrar 1
+    MOV DL, LnJmp            ; Salto de línea  
+    MOV AH, 02H              
+    INT 21H 
+
+    ; Ahora generar la secuencia
+    MOV AL, 0                ; F(n-2)
+    MOV BL, 1                ; F(n-1)
+
+SiguienteTermino:
+    MOV AH, AL               ; F(n-2)
+    ADD AH, BL               ; F(n) = F(n-2) + F(n-1)
+    
+    CMP AH, CL               ; Si F(n) > num1, terminar
+    JA TerminarFibonacci
+
+    ; Imprimir siguiente término
+    MOV AL, AH               ; Pasar el valor de AH a AL
+    Mostrar_2Digitos AL      ; Llamar al macro con el número correcto
+    MOV DL, LnJmp            ; Salto de línea  
+    MOV AH, 02H              
+    INT 21H 
+
+    ; Preparar siguientes valores
+    MOV AL, BL               ; F(n-2) = F(n-1)
+    MOV BL, AH               ; F(n-1) = F(n)
+    JMP SiguienteTermino
+
+TerminarFibonacci:
+ENDM
